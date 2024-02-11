@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, TextInput, ImageBackground } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, TextInput, ImageBackground, KeyboardAvoidingView, Platform } from 'react-native';
 
 const Start = ({ navigation }) => {
 
@@ -13,7 +13,7 @@ const Start = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <ImageBackground source={require('../img/background_image.png')} resizeMode='cover' style={styles.image} >
+      <ImageBackground source={require('../assets/background_image.png')} resizeMode='cover' style={styles.image} >
         {/* Title of the app */}
         <Text style={styles.title}>Chat</Text>
         {/* This box is the container for name input and color pallete */}
@@ -51,6 +51,8 @@ const Start = ({ navigation }) => {
           </TouchableOpacity>
         </View>
       </ImageBackground>
+      {/* this prevents the name & keyboard being obstructed by iOS keyboard. note: behavior for iOS ALWAYS set to padding */}
+      {Platform.OS === "ios" ? <KeyboardAvoidingView behavior="padding" /> : null}
     </View>
   );
 }
@@ -113,9 +115,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row' //since default flex direction is column, set to row so child elements (ie colorPallete) appear side by side 
   },
   colorPallete: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
     margin: 10
   }
 });
