@@ -1,36 +1,34 @@
-import { StyleSheet, View, Text, KeyboardAvoidingView, Platform } from 'react-native';
+import { StyleSheet, View, KeyboardAvoidingView, Platform } from 'react-native';
 import { useEffect, useState } from 'react';
 import { GiftedChat, Bubble } from 'react-native-gifted-chat';
+import { collection, addDoc, onSnapshot, query, orderBy } from "firebase/firestore";
 
-const Chat = ({ route, navigation }) => {
+const Chat = ({ route, navigation, db }) => {
 
   const [messages, setMessages] = useState([]);
-  const { name, backgroundColor } = route.params;
+  const { name, backgroundColor, id } = route.params;
 
   useEffect(() => {
     navigation.setOptions({ title: name });
-    setMessages([
-      {
-        _id: 1,
-        text: 'Hello developer!',
-        createdAt: new Date(),
-        user: {
-          _id: 2,
-          name: 'React Native',
-          avatar: 'https://placeimg.com/140/140/any',
-        },
-      },
-      {
-        _id: 2,
-        text: 'You\'re inside the chat',
-        createdAt: new Date(),
-        system: true,
-      }
-    ])
+    const q = query(collection(db, "messages"), orderBy("createdAt", "desc"));
+    //the onSnapshot() function listens for updates inside the collection
+    const unsubMessages = onSnapshot(q, (docs) => {
+      let newMessages = [];
+      docs.forEach(doc => {
+        newMessages.push({ id: doc.id, ...doc.data(), createdAt: new Date(doc.data().createdAt.toMillis()) })
+      });
+      setMessages(newMessages);
+    });
+
+    return () => {
+      if (unsubMessages) unsubMessages();
+    }
+
   }, []); //the empty dependency array means this will only be mounted once, ie when user enters their username
 
   const onSend = (newMessages) => {
-    setMessages(previousMessages => GiftedChat.append(previousMessages, newMessages))
+    //the message to be sent/added is the 1st item inside the newMessages array
+    addDoc(collection(db, "messages"), newMessages[0]);
   }
 
   //customize the color of the sender & receiver speech bubbles. Then pass renderBubbles inside GiftedChat component
@@ -55,7 +53,8 @@ const Chat = ({ route, navigation }) => {
         renderBubble={renderBubble}
         onSend={messages => onSend(messages)}
         user={{
-          _id: 1
+          _id: id,
+          name
         }}
       />
       {/* this will prevent the name & color picker being obstructed by the Android keyboard */}

@@ -1,11 +1,23 @@
 import { useState } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, TextInput, ImageBackground, KeyboardAvoidingView, Platform } from 'react-native';
+import { getAuth, signInAnonymously } from "firebase/auth";
+import { StyleSheet, View, Text, TouchableOpacity, TextInput, ImageBackground, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 
 const Start = ({ navigation }) => {
-
+  const auth = getAuth(); //initializing Firebase Authentication handler
   //these states will update the UI to display the user's name and chosen bgColor
   const [name, setName] = useState('');
   const [backgroundColor, setBackgroundColor] = useState('');
+
+  const signInUser = () => {
+    signInAnonymously(auth)
+      .then(result => {
+        navigation.navigate('Chat', { name, backgroundColor, id: result.user.uid });
+        Alert.alert('Signed in successfully');
+      })
+      .catch((error) => {
+        Alert.alert('Unable to sign in. Try again later');
+      })
+  }
 
   const handleColorChange = (color) => {
     setBackgroundColor(color);
@@ -45,7 +57,7 @@ const Start = ({ navigation }) => {
           </View>
           <TouchableOpacity
             style={styles.button}
-            onPress={() => navigation.navigate('Chat', { name, backgroundColor })} //shorthand for {name: name} & {background: background}
+            onPress={() => signInUser()}
           >
             <Text style={styles.buttonText}>Start Chatting</Text>
           </TouchableOpacity>
