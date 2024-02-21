@@ -1,28 +1,36 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet } from "react-native";
 
 //import the screens
-import Start from './components/Start';
-import Chat from './components/Chat';
+import Start from "./components/Start";
+import Chat from "./components/Chat";
 
 //import React Navigator
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { NavigationContainer } from "@react-navigation/native";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
-import { initializeApp } from "firebase/app";
-import { getFirestore, enableNetwork, disableNetwork } from "firebase/firestore";
-import { initializeAuth, getReactNativePersistence } from 'firebase/auth'; //refer to comments from line 25
-import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage'; //refer to comments from line 25
+import { initializeApp, getApps, getApp } from "firebase/app";
+import {
+  getFirestore,
+  enableNetwork,
+  disableNetwork,
+} from "firebase/firestore";
+import {
+  initializeAuth,
+  getReactNativePersistence,
+  getAuth,
+} from "firebase/auth";
+import ReactNativeAsyncStorage from "@react-native-async-storage/async-storage";
 
 //Whenever a change in connection is detected, NetInfo returns a state object that represents the current network connectivity status
-import { useNetInfo } from '@react-native-community/netinfo';
+import { useNetInfo } from "@react-native-community/netinfo";
 import { useEffect } from "react";
-import { LogBox, Alert } from "react-native";
+import { Alert } from "react-native";
+//initialize a handler to Firebase storage
+import { getStorage } from "firebase/storage";
 
-const Stack = createNativeStackNavigator(); //this method returns an object containing 2 components, ie Navigator & Screen 
-
+const Stack = createNativeStackNavigator(); //this method returns an object containing 2 components, ie Navigator & Screen
 
 const App = () => {
-
   const connectionStatus = useNetInfo();
 
   useEffect(() => {
@@ -40,47 +48,49 @@ const App = () => {
     projectId: "chatapp-2c05f",
     storageBucket: "chatapp-2c05f.appspot.com",
     messagingSenderId: "812291137475",
-    appId: "1:812291137475:web:4ea2a24db2bdecbf33e776"
+    appId: "1:812291137475:web:4ea2a24db2bdecbf33e776",
   };
 
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
+  let app;
 
-  // initializeAuth(app, {
-  //   persistence: getReactNativePersistence(ReactNativeAsyncStorage)
-  // });
+  if (getApps().length === 0) {
+    app = initializeApp(firebaseConfig);
+    auth = initializeAuth(app, {
+      persistence: getReactNativePersistence(ReactNativeAsyncStorage),
+    });
+  } else {
+    app = getApp();
+    auth = getAuth(app);
+  }
   //initialize Cloud Firestone & get a reference to the service
   const db = getFirestore(app);
-
+  const storage = getStorage(app);
 
   return (
     <NavigationContainer style={styles.container}>
-      <Stack.Navigator
-        initialRouteName='Start'
-      >
-        <Stack.Screen
-          name='Start'
-          component={Start}
-        />
-        <Stack.Screen
-          name='Chat'
-        >
-          {props => <Chat db={db} {...props}
-            isConnected={connectionStatus.isConnected}
-          />
-          }
+      <Stack.Navigator initialRouteName="Start">
+        <Stack.Screen name="Start" component={Start} />
+        <Stack.Screen name="Chat">
+          {(props) => (
+            <Chat
+              db={db}
+              storage={storage}
+              {...props}
+              isConnected={connectionStatus.isConnected}
+            />
+          )}
         </Stack.Screen>
       </Stack.Navigator>
     </NavigationContainer>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "#fff",
+    alignItems: "center",
+    justifyContent: "center",
   },
 });
 
